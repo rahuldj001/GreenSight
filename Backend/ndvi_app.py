@@ -613,6 +613,9 @@ def calculate_forest_change(year1, year2, lat, lng):
     except Exception as e:
         print(f"Error calculating forest change: {e}")
         return 0.01, 0.01  # Return placeholder values in case of error
+@app.route("/")
+def home():
+    return "Hello! The GreenSight server is running."
 
 # API Endpoint for NDVI Analysis & Forecast
 @app.route("/ndvi-analysis", methods=["GET"])
