@@ -18,6 +18,7 @@ import os
 import ee
 import numpy as np
 import tensorflow as tf
+import json
 import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
