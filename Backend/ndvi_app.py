@@ -39,8 +39,9 @@ CORS(app)
 # --- DEPLOYMENT CHANGE: Handle Google Credentials via Environment Variable ---
 try:
     # On Render, we'll store the JSON content in an environment variable
-    google_creds_json = os.environ.get("")
-    if google_creds_json:GOOGLE_CREDENTIALS_JSON
+    google_creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    
+    if google_creds_json:
         creds_dict = json.loads(google_creds_json)
         with open("service_account.json", "w") as f:
             json.dump(creds_dict, f)
@@ -53,11 +54,7 @@ try:
 
     ee.Initialize(project="project-deforestation-0812")
     print("Google Earth Engine Initialized Successfully!")
-except Exception as e:
-    print(f"Google Earth Engine authentication failed: {e}")
-try:
-    ee.Initialize(project="project-deforestation-0812")
-    print("Google Earth Engine Initialized Successfully!")
+
 except Exception as e:
     print(f"Google Earth Engine authentication failed: {e}")
 
