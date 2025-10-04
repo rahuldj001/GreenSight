@@ -1,3 +1,19 @@
+import sys
+
+# --- Windows Compatibility Fix for 'fcntl' module ---
+# This code creates a dummy 'fcntl' module on Windows to prevent an
+# ImportError in a dependency of the 'earthengine-api' library.
+if sys.platform == 'win32':
+    import os
+    
+    class Fcntl:
+        def ioctl(self, *args):
+            pass
+            
+    sys.modules['fcntl'] = Fcntl()
+# --- End of Fix ---
+
+
 import os
 import ee
 import numpy as np
