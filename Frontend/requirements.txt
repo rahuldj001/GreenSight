@@ -1,5 +1,0 @@
-streamlit
-geemap
-earthengine-api
-numpy
-matplotlib
