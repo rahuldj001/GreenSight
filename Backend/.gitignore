@@ -1,0 +1,9 @@
+# Ignore virtual environments
+venv/
+__pycache__/
+
+# Ignore compiled files
+*.pyd
+*.dll
+*.so
+*.o
