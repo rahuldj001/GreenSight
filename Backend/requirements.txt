@@ -1,0 +1,11 @@
+streamlit
+geemap
+earthengine-api
+numpy
+matplotlib
+flask
+flask-cors
+tensorflow
+requests
+Pillow
+gunicorn
