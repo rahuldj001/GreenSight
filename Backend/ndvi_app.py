@@ -43,14 +43,22 @@ try:
     
     if google_creds_json:
         creds_dict = json.loads(google_creds_json)
-        with open("service_account.json", "w") as f:
+        # Use absolute path to ensure clarity
+        creds_path = os.path.abspath("service_account.json")
+        with open(creds_path, "w") as f:
             json.dump(creds_dict, f)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
-        print("Loaded Google credentials from environment variable.")
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+        print(f"Loaded Google credentials from environment variable to {creds_path}.")
     else:
         # Fallback for local development
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "project-deforestation-0812-1fd53bcc53b5.json"
         print("Loaded Google credentials from local file.")
+
+    # Explicitly verify the file exists
+    if not os.path.exists(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
+        print(f"ERROR: Credentials file not found at {os.environ['GOOGLE_APPLICATION_CREDENTIALS']}")
+    else:
+        print(f"Credentials file verified at {os.environ['GOOGLE_APPLICATION_CREDENTIALS']}")
 
     ee.Initialize(project="project-deforestation-0812")
     print("Google Earth Engine Initialized Successfully!")
