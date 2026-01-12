@@ -49,7 +49,7 @@ try:
         print("Loaded Google credentials from environment variable.")
     else:
         # Fallback for local development
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "project-deforestation-0812-3643b7a63ad9.json"
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "project-deforestation-0812-1fd53bcc53b5.json"
         print("Loaded Google credentials from local file.")
 
     ee.Initialize(project="project-deforestation-0812")
@@ -690,8 +690,13 @@ def analyze_ndvi():
         
         # Use the public URL of your Render service, or fallback to localhost
         backend_url = os.environ.get("BACKEND_URL", "http://localhost:8501")
+        # Ensure no trailing slash
+        backend_url = backend_url.rstrip("/")
         base_url = f"{backend_url}/output/"
-        #base_url = "http://localhost:8501/output/"   
+        
+        print(f"DEBUG: Backend URL resolved to: {backend_url}")
+        print(f"DEBUG: Base URL for images: {base_url}")
+
         response_data = {
             "ndvi_image1": f"{base_url}{img1}" if img1 else "Error generating NDVI image",
             "ndvi_image2": f"{base_url}{img2}" if img2 else "Error generating NDVI image",
@@ -712,7 +717,7 @@ def analyze_ndvi():
             }
         }
         
-        print("API Response:", response_data)  # Debugging
+        print(f"DEBUG: Full API Response: {response_data}")
 
         return jsonify(response_data)
     except Exception as e:
