@@ -23,6 +23,7 @@ import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from PIL import Image
+from google.oauth2 import service_account
 
 # Import the model from our model_loader module
 from model_loader import deforestation_model, dice_coef, dice_loss, Cast
@@ -34,37 +35,37 @@ CORS(app)
 #CORS(app, resources={r"/ndvi-analysis": {"origins": "http://localhost:3000"}})  # Allow cross-origin requests
 
 # Set up Google Earth Engine authentication
-# service_account_path = "C:/Users/Home/Downloads/project-deforestation-0812-3643b7a63ad9.json"
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = service_account_path
-# --- DEPLOYMENT CHANGE: Handle Google Credentials via Environment Variable ---
 try:
     # On Render, we'll store the JSON content in an environment variable
     google_creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     
+    creds = None
     if google_creds_json:
+        print("Reading credentials from GOOGLE_CREDENTIALS_JSON environment variable...")
         creds_dict = json.loads(google_creds_json)
-        # Use absolute path to ensure clarity
-        creds_path = os.path.abspath("service_account.json")
-        with open(creds_path, "w") as f:
-            json.dump(creds_dict, f)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
-        print(f"Loaded Google credentials from environment variable to {creds_path}.")
+        creds = service_account.Credentials.from_service_account_info(creds_dict)
     else:
         # Fallback for local development
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "project-deforestation-0812-1fd53bcc53b5.json"
-        print("Loaded Google credentials from local file.")
+        print("Checking for local credentials file...")
+        local_creds_path = "project-deforestation-0812-1fd53bcc53b5.json"
+        if os.path.exists(local_creds_path):
+             creds = service_account.Credentials.from_service_account_file(local_creds_path)
+             print(f"Loaded credentials from {local_creds_path}")
+        else:
+             print(f"WARNING: Local credentials file {local_creds_path} not found.")
 
-    # Explicitly verify the file exists
-    if not os.path.exists(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
-        print(f"ERROR: Credentials file not found at {os.environ['GOOGLE_APPLICATION_CREDENTIALS']}")
+    if creds:
+        ee.Initialize(credentials=creds, project="project-deforestation-0812")
+        print("Google Earth Engine Initialized Successfully with explicit credentials!")
     else:
-        print(f"Credentials file verified at {os.environ['GOOGLE_APPLICATION_CREDENTIALS']}")
-
-    ee.Initialize(project="project-deforestation-0812")
-    print("Google Earth Engine Initialized Successfully!")
+        # Last resort fallback (might fail if no default auth is set up)
+        ee.Initialize(project="project-deforestation-0812")
+        print("Google Earth Engine Initialized using default authentication!")
 
 except Exception as e:
     print(f"Google Earth Engine authentication failed: {e}")
+    # Print more details about the environment to help debug
+    print(f"Environment keys: {[k for k in os.environ.keys() if 'GOOGLE' in k]}")
 
 # Define custom metrics and loss functions
 def dice_coef(y_true, y_pred, smooth=1):
