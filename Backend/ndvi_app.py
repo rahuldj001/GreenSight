@@ -40,8 +40,10 @@ try:
     google_creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     
     creds = None
+    print("--- App Version: 2.1 - Debugging Auth ---")
     if google_creds_json:
-        print("Reading credentials from GOOGLE_CREDENTIALS_JSON environment variable...")
+        print(f"Reading credentials from GOOGLE_CREDENTIALS_JSON environment variable... (Length: {len(google_creds_json)})")
+        print(f"First 5 chars: {google_creds_json[:5]}")
         try:
             creds_dict = json.loads(google_creds_json)
             # Create credentials object
