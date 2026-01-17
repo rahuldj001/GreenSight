@@ -42,25 +42,33 @@ try:
     creds = None
     if google_creds_json:
         print("Reading credentials from GOOGLE_CREDENTIALS_JSON environment variable...")
-        creds_dict = json.loads(google_creds_json)
-        creds = service_account.Credentials.from_service_account_info(creds_dict)
+        try:
+            creds_dict = json.loads(google_creds_json)
+            # Create credentials object
+            creds = service_account.Credentials.from_service_account_info(creds_dict)
+            # Initialize with specific project and credentials
+            ee.Initialize(credentials=creds, project="project-deforestation-0812")
+            print("Percentage of GEE initialization complete: 100%") 
+            print("Google Earth Engine Initialized Successfully with explicit credentials!")
+        except Exception as e:
+            print(f"CRITICAL ERROR: Failed to create credentials from JSON: {e}")
+            # Do NOT fall back to default auth if explicit auth failed - it will just break later
+            raise e
     else:
         # Fallback for local development
         print("Checking for local credentials file...")
         local_creds_path = "project-deforestation-0812-3643b7a63ad9.json"
+        
         if os.path.exists(local_creds_path):
              creds = service_account.Credentials.from_service_account_file(local_creds_path)
+             ee.Initialize(credentials=creds, project="project-deforestation-0812")
              print(f"Loaded credentials from {local_creds_path}")
         else:
              print(f"WARNING: Local credentials file {local_creds_path} not found.")
-
-    if creds:
-        ee.Initialize(credentials=creds, project="project-deforestation-0812")
-        print("Google Earth Engine Initialized Successfully with explicit credentials!")
-    else:
-        # Last resort fallback (might fail if no default auth is set up)
-        ee.Initialize(project="project-deforestation-0812")
-        print("Google Earth Engine Initialized using default authentication!")
+             # Only try default initialization if NO credentials were provided at all
+             # This (ee.Initialize()) will fail on Render if no auth is present, which is correct
+             ee.Initialize(project="project-deforestation-0812")
+             print("Google Earth Engine Initialized using default authentication!")
 
 except Exception as e:
     print(f"Google Earth Engine authentication failed: {e}")
