@@ -47,7 +47,7 @@ try:
     else:
         # Fallback for local development
         print("Checking for local credentials file...")
-        local_creds_path = "project-deforestation-0812-1fd53bcc53b5.json"
+        local_creds_path = "project-deforestation-0812-3643b7a63ad9.json"
         if os.path.exists(local_creds_path):
              creds = service_account.Credentials.from_service_account_file(local_creds_path)
              print(f"Loaded credentials from {local_creds_path}")
