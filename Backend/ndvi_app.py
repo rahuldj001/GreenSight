@@ -35,26 +35,31 @@ CORS(app)
 #CORS(app, resources={r"/ndvi-analysis": {"origins": "http://localhost:3000"}})  # Allow cross-origin requests
 
 # Set up Google Earth Engine authentication
+# Track Auth Status
+EE_AUTH_STATUS = "Not Initialized"
+EE_AUTH_ERROR = None
+
+# Set up Google Earth Engine authentication
 try:
     # On Render, we'll store the JSON content in an environment variable
     google_creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     
     creds = None
-    print("--- App Version: 2.1 - Debugging Auth ---")
+    print("--- App Version: 2.2 - Root Debug w/ Status ---")
     if google_creds_json:
         print(f"Reading credentials from GOOGLE_CREDENTIALS_JSON environment variable... (Length: {len(google_creds_json)})")
-        print(f"First 5 chars: {google_creds_json[:5]}")
         try:
             creds_dict = json.loads(google_creds_json)
             # Create credentials object
             creds = service_account.Credentials.from_service_account_info(creds_dict)
             # Initialize with specific project and credentials
             ee.Initialize(credentials=creds, project="project-deforestation-0812")
-            print("Percentage of GEE initialization complete: 100%") 
             print("Google Earth Engine Initialized Successfully with explicit credentials!")
+            EE_AUTH_STATUS = "Success: Authenticated with Environment Variable"
         except Exception as e:
             print(f"CRITICAL ERROR: Failed to create credentials from JSON: {e}")
-            # Do NOT fall back to default auth if explicit auth failed - it will just break later
+            EE_AUTH_STATUS = f"Failed (Env Var): {str(e)}"
+            EE_AUTH_ERROR = str(e)
             raise e
     else:
         # Fallback for local development
@@ -65,17 +70,36 @@ try:
              creds = service_account.Credentials.from_service_account_file(local_creds_path)
              ee.Initialize(credentials=creds, project="project-deforestation-0812")
              print(f"Loaded credentials from {local_creds_path}")
+             EE_AUTH_STATUS = "Success: Authenticated with Local File"
         else:
              print(f"WARNING: Local credentials file {local_creds_path} not found.")
-             # Only try default initialization if NO credentials were provided at all
-             # This (ee.Initialize()) will fail on Render if no auth is present, which is correct
-             # STOP HERE. Do not try default auth on server.
+             EE_AUTH_STATUS = "Failed: No Credentials Found (Env Var missing, Local file missing)"
              raise Exception("Fatal: GOOGLE_CREDENTIALS_JSON environment variable is missing and local file not found.")
 
 except Exception as e:
     print(f"Google Earth Engine authentication failed: {e}")
-    # Print more details about the environment to help debug
-    print(f"Environment keys: {[k for k in os.environ.keys() if 'GOOGLE' in k]}")
+    if EE_AUTH_STATUS.startswith("Not") or EE_AUTH_STATUS.startswith("Success"):
+        EE_AUTH_STATUS = f"Final Initialization Failed: {str(e)}"
+    
+# Debug Root Route
+@app.route("/")
+def home():
+    status_color = "green" if "Success" in EE_AUTH_STATUS else "red"
+    return f"""
+    <html>
+    <body style="font-family: sans-serif; padding: 20px;">
+        <h1>GreenSight Backend Status</h1>
+        <div style="padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9;">
+            <h3>GEE Authentication Status:</h3>
+            <p style="color: {status_color}; font-size: 18px; font-weight: bold;">{EE_AUTH_STATUS}</p>
+        </div>
+        <br>
+        <p><b>App Version:</b> 2.2</p>
+        <p><b>Python:</b> {sys.version}</p>
+        <p><a href="/test-images">View Test Images</a></p>
+    </body>
+    </html>
+    """
 
 # Define custom metrics and loss functions
 def dice_coef(y_true, y_pred, smooth=1):
@@ -664,6 +688,13 @@ def calculate_forest_change(year1, year2, lat, lng):
 def analyze_ndvi():
     # Import numpy locally to ensure it's available in this function
     import numpy as np
+    
+    # Return early if auth failed
+    if not EE_AUTH_STATUS.startswith("Success"):
+         return jsonify({
+             "error": f"Backend Authentication Failed: {EE_AUTH_STATUS}",
+             "auth_status": EE_AUTH_STATUS
+         })
     
     try:
         lat, lng = float(request.args.get("lat")), float(request.args.get("lng"))
