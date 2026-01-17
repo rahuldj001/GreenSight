@@ -221,7 +221,21 @@ def generate_ndvi_image(year, lat, lng, filename):
         return filename
     except Exception as e:
         print(f"Error generating NDVI image: {e}")
-        return None
+        # Create a fallback image with error message
+        import matplotlib.pyplot as plt
+        
+        plt.figure(figsize=(10, 8))
+        plt.text(0.5, 0.5, f"Error generating NDVI:\n{str(e)}", 
+                 horizontalalignment='center', verticalalignment='center',
+                 fontsize=12, color='red', wrap=True)
+        plt.axis('off')
+        
+        # Save as high-quality PNG
+        plt_path = os.path.join(output_folder, filename)
+        plt.savefig(plt_path, dpi=100, bbox_inches='tight')
+        plt.close()
+        
+        return filename
 
 # Function to predict deforestation
 def generate_deforestation_forecast(lat, lng, filename):
@@ -540,7 +554,19 @@ def generate_ndvi_difference(year1, year2, lat, lng, filename):
         return filename
     except Exception as e:
         print(f"Error generating NDVI difference: {e}")
-        return None
+        import matplotlib.pyplot as plt
+        
+        plt.figure(figsize=(10, 8))
+        plt.text(0.5, 0.5, f"Error generating NDVI Diff:\n{str(e)}", 
+                 horizontalalignment='center', verticalalignment='center',
+                 fontsize=12, color='red', wrap=True)
+        plt.axis('off')
+        
+        plt_path = os.path.join(output_folder, filename)
+        plt.savefig(plt_path, dpi=100, bbox_inches='tight')
+        plt.close()
+        
+        return filename
     
 
 def calculate_forest_change(year1, year2, lat, lng):
