@@ -69,8 +69,8 @@ try:
              print(f"WARNING: Local credentials file {local_creds_path} not found.")
              # Only try default initialization if NO credentials were provided at all
              # This (ee.Initialize()) will fail on Render if no auth is present, which is correct
-             ee.Initialize(project="project-deforestation-0812")
-             print("Google Earth Engine Initialized using default authentication!")
+             # STOP HERE. Do not try default auth on server.
+             raise Exception("Fatal: GOOGLE_CREDENTIALS_JSON environment variable is missing and local file not found.")
 
 except Exception as e:
     print(f"Google Earth Engine authentication failed: {e}")
